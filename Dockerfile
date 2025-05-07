@@ -1,30 +1,27 @@
-FROM php:8.2-fpm
+FROM php:8.2-apache
 
-# Install system dependencies and unzip utility
+# Working directory
+WORKDIR /var/www/html
+
+# System + PHP dependencies
 RUN apt-get update && apt-get install -y \
-    libpng-dev \
-    libjpeg62-turbo-dev \
-    libfreetype6-dev \
-    unzip \
-    git
+    git curl zip unzip libpng-dev libonig-dev libzip-dev libxml2-dev \
+    && docker-php-ext-install pdo pdo_mysql zip gd
 
-# Install Composer
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+# Apache rewrite
+RUN a2enmod rewrite
 
-# Set working directory
-WORKDIR /var/www
+# Composer install
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Copy composer files
-COPY composer.json composer.lock ./
-
-# Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader
-
-# Copy application files
+# Copy Laravel project files
 COPY . .
 
-# Expose port (if needed)
-EXPOSE 9000
+# Install Laravel dependencies
+RUN composer install --no-dev --optimize-autoloader
 
-# Start PHP-FPM server
-CMD ["php-fpm"]
+# Permissions
+RUN chown -R www-data:www-data /var/www/html \
+    && chmod -R 755 /var/www/html/storage
+
+EXPOSE 80
