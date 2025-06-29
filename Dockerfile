@@ -40,6 +40,16 @@ RUN echo "Listen $PORT" > /etc/apache2/ports.conf && \
     sed -i "s/:80/:$PORT/" /etc/apache2/sites-available/000-default.conf && \
     sed -i "s/<VirtualHost \*:80>/<VirtualHost \*:$PORT>/" /etc/apache2/sites-available/000-default.conf
 
+
+# ... (keep your existing Dockerfile content)
+
+# Configure Apache for Render
+RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf && \
+    echo "Listen 0.0.0.0:${PORT}" >> /etc/apache2/ports.conf && \
+    sed -i "s/<VirtualHost \*:${PORT}>/<VirtualHost 0.0.0.0:${PORT}>/" /etc/apache2/sites-available/000-default.conf
+
+# ... (rest of your Dockerfile)
+
 # Health check (optional but recommended)
 HEALTHCHECK --interval=30s --timeout=3s \
   CMD curl -f http://localhost:$PORT/ || exit 1
