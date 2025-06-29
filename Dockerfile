@@ -26,26 +26,25 @@ COPY . .
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
 
-# Copy .env (optional: you can skip if set in Render environment)
-COPY .env.example .env
-
-# Generate APP_KEY
-RUN php artisan key:generate || true
-
 # Fix folder permissions
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Tell Apache to listen on the dynamic Render PORT
-ENV PORT 8080
-EXPOSE ${PORT}
+# Configure for Render's dynamic port (use 8080 or 10000)
+ARG PORT=8080
+ENV PORT $PORT
+EXPOSE $PORT
 
-# Replace Apache listen directives to use 0.0.0.0:${PORT}
-RUN sed -i "s|Listen 80|Listen 0.0.0.0:${PORT}|" /etc/apache2/ports.conf \
-    && sed -i "s|<VirtualHost \*:80>|<VirtualHost 0.0.0.0:${PORT}>|" /etc/apache2/sites-available/000-default.conf
+# Update Apache configuration for port
+RUN echo "Listen $PORT" > /etc/apache2/ports.conf && \
+    sed -i "s/:80/:$PORT/" /etc/apache2/sites-available/000-default.conf && \
+    sed -i "s/<VirtualHost \*:80>/<VirtualHost \*:$PORT>/" /etc/apache2/sites-available/000-default.conf
 
-# Final startup command
-CMD php artisan config:clear \
- && php artisan config:cache \
- && php artisan migrate --force \
- && apache2-foreground
+# Health check (optional but recommended)
+HEALTHCHECK --interval=30s --timeout=3s \
+  CMD curl -f http://localhost:$PORT/ || exit 1
+
+# Final startup command (split into a script for better error handling)
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+ENTRYPOINT ["docker-entrypoint.sh"]
