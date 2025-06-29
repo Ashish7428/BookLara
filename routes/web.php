@@ -16,21 +16,27 @@ use App\Http\Controllers\CommentController;
 
 
 Route::get('/', function () {
-    $search = request('search');
-    $query = Book::where('status', 'approved');
-    
-    if ($search) {
-        $query->where(function($q) use ($search) {
-            $q->where('title', 'like', "%{$search}%")
-              ->orWhereHas('author', function($q) use ($search) {
-                  $q->where('full_name', 'like', "%{$search}%");
-              });
-        });
+    try {
+        $search = request('search');
+        $query = Book::where('status', 'approved');
+
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhereHas('author', function($q) use ($search) {
+                      $q->where('full_name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        $books = $query->latest()->take(8)->get();
+        return view('welcome', compact('books', 'search'));
+
+    } catch (\Exception $e) {
+        return 'Error: ' . $e->getMessage();
     }
-    
-    $books = $query->latest()->take(8)->get();
-    return view('welcome', compact('books', 'search'));
 });
+
 
 // Authentication Routes
 Route::get('/register', function () {
