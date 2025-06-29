@@ -6,6 +6,7 @@ services:
     dockerContext: .
     dockerfilePath: Dockerfile
     branch: main
+    port: 8080
     plan: free
     envVars:
       - key: APP_ENV
