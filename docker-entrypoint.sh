@@ -11,6 +11,9 @@ while ! php artisan migrate --force; do
   sleep 5
 done
 
+# Update trending books cache on container start
+php artisan books:update-trending
+
 # Start queue worker in background
 php artisan queue:work --tries=3 &
 
