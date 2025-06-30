@@ -12,7 +12,7 @@
             @endif
             
             <div class="card shadow">
-                <div style="background-color:#000000;" class="card-header  text-white" >
+                <div style="backgrouncd-color:#000000;" class="card-header  text-white" >
                     <h4 class="mb-0">Login</h4>
                 </div>
                 <div class="card-body">

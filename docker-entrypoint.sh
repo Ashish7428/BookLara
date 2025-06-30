@@ -11,5 +11,11 @@ while ! php artisan migrate --force; do
   sleep 5
 done
 
-# Start Apache
+# Start queue worker in background
+php artisan queue:work --tries=3 &
+
+# Start scheduler in background
+php artisan schedule:work &
+
+# Start Apache in foreground
 exec apache2-foreground
