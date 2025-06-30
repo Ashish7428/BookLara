@@ -31,6 +31,22 @@
                 </div>
             </div>
         </div>
+
+        <div class="col-md-3">
+            <div class="card bg-light border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-bookmark fa-2x text-secondary mb-2"></i>
+                    <h3 class="h2 mb-0" id="bookmarksCount">
+                        <a href="{{ route('books.bookmarks') }}" style="text-decoration:none; color:inherit;">
+                            {{ $bookmarksCount }}
+                        </a>
+                    </h3>
+                    <p class="text-muted">Saved Books
+                        
+                    </p>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- My Library Section -->
@@ -43,16 +59,18 @@
                 </div>
             </div>
             <hr>
-            <div class="row" id="booksContainer">
+            <div class="owl-carousel owl-theme" id="booksCarousel">
                 @forelse($myBooks as $book)
-                <div class="col-md-3 mb-3 book-item {{ $loop->index >= 4 ? 'd-none' : '' }}">
+                <div class="item">
                     <div class="card h-100 border-0 shadow-sm book-card">
                         <img src="{{ asset($book->book->cover_image ?? 'images/default-book-cover.jpg') }}" 
                              class="card-img-top" 
                              alt="{{ $book->book->title ?? 'Book Cover' }}"
                              style="height: 200px; object-fit: cover;">
                         <div class="card-body">
-                            <h5 class="card-title">{{ $book->book->title ?? 'Untitled' }}</h5>
+                            <h5 class="card-title text-truncate" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ $book->book->title ?? 'Untitled' }}">
+                                {{ $book->book->title ?? 'Untitled' }}
+                            </h5>
                             <p class="card-text text-muted">By {{ $book->book->author->full_name ?? 'Unknown Author' }}</p>
                             <div class="progress mb-2" style="height: 5px;">
                                 <div class="progress-bar" 
@@ -77,7 +95,7 @@
                     </div>
                 </div>
                 @empty
-                <div class="col-12">
+                <div class="item">
                     <div class="card border-0 shadow-sm">
                         <div class="card-body text-center py-5">
                             <i class="fas fa-books fa-3x text-muted mb-3"></i>
@@ -140,9 +158,65 @@
         width: 150px;
         height: 150px;
         position: relative;
-        /* Add more styling for circular progress */
+    }
+    /* Custom OwlCarousel nav positioning */
+    #booksCarousel .owl-nav {
+        position: absolute;
+        top: 50%;
+        left: 0;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        transform: translateY(-50%);
+        pointer-events: none;
+    }
+    #booksCarousel .owl-nav button {
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        color: #333;
+        font-size: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        pointer-events: all;
+        transition: background 0.2s;
+    }
+    #booksCarousel .owl-nav button:hover {
+        background: #007bff;
+        color: #fff;
+        border-color: #007bff;
+    }
+    #booksCarousel {
+        position: relative;
+        padding: 0 30px;
+    }
+    @media (max-width: 1000px) {
+        #booksCarousel .owl-nav {
+            top: 45%;
+        }
     }
 </style>
+@endpush
+@push('scripts')
+<script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
+<script>
+$(document).ready(function(){
+    $('#booksCarousel').owlCarousel({
+        loop: false,
+        margin: 20,
+        nav: true,
+        dots: true,
+        mouseDrag: true,
+        touchDrag: true,
+        responsive: {
+            0: { items: 1 },
+            600: { items: 2 },
+            1000: { items: 4 }
+        }
+    });
+});
+</script>
 @endpush
 
 

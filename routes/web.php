@@ -95,6 +95,7 @@ Route::middleware(['auth'])->group(function () {
         
         // Books - Make sure these routes are in the correct order
         Route::get('/books/browse', [App\Http\Controllers\User\BookController::class, 'browse'])->name('books.browse');
+        Route::get('/books/bookmarks', [App\Http\Controllers\User\BookController::class, 'bookmarks'])->name('books.bookmarks');
         Route::get('/books/{book}/read', [App\Http\Controllers\User\BookController::class, 'read'])->name('books.read');
         Route::get('/books/{book}/page/{page}', [App\Http\Controllers\User\BookController::class, 'getPage'])->name('books.page');
         Route::get('/books/{book}', [App\Http\Controllers\User\BookController::class, 'show'])->name('books.show');

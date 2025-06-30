@@ -26,7 +26,9 @@ class DashboardController extends Controller
         $readingHours = ReadingProgress::where('user_id', $user->id)
             ->sum('reading_time') ?? 0;
 
-        $reviewsCount = $user->reviews()->count() ?? 0;
+        $reviewsCount = $user->comments()->count() ?? 0;
+
+        $bookmarksCount = $user->bookmarks()->count() ?? 0;
 
         // Last Book (currently reading)
         $lastBook = ReadingProgress::where('user_id', $user->id)
@@ -38,16 +40,27 @@ class DashboardController extends Controller
         $myBooks = ReadingProgress::where('user_id', $user->id)
             ->with('book')
             ->latest()
-            ->take(4)
+    
             ->get();
 
-        // Trending Books (based on views)
-        $trendingBooks = Book::join('authors', 'books.author_id', '=', 'authors.id')
-            ->select('books.*', 'authors.full_name as author_name')
-            ->where('status', 'approved')
-            ->orderBy('views', 'desc')
-            ->take(8)
-            ->get();
+        // Trending Books (from cache if available)
+        $trendingBooks = \Cache::get('trending_books');
+        if (!$trendingBooks) {
+            $trendingBooks = Book::where('status', 'approved')
+                ->where('views', '>', 0)
+                ->orderByDesc('views')
+                ->take(8)
+                ->get();
+            if ($trendingBooks->count() < 8) {
+                $needed = 8 - $trendingBooks->count();
+                $randomBooks = Book::where('status', 'approved')
+                    ->where('views', 0)
+                    ->inRandomOrder()
+                    ->take($needed)
+                    ->get();
+                $trendingBooks = $trendingBooks->concat($randomBooks);
+            }
+        }
 
         // Categories with book counts
         $categories = Category::withCount('books')->get();
@@ -57,6 +70,7 @@ class DashboardController extends Controller
             'completedBooks',
             'readingHours',
             'reviewsCount',
+            'bookmarksCount',
             'lastBook',
             'myBooks',
             'trendingBooks',

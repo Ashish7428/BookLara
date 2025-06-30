@@ -1,7 +1,13 @@
 @extends('layouts.app')
 
 @section('content')
+
 <div class="container py-4">
+    @if(session('error'))
+    <div class="alert alert-danger">
+        {{ session('error') }}
+    </div>
+@endif
     <div class="row">
         <!-- Book Cover and Primary Details -->
         <div class="">

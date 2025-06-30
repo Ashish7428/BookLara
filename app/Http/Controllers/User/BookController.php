@@ -10,7 +10,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Models\ReadingProgress;
 use setasign\Fpdi\Fpdi;
-use App\Jobs\SaveReadingProgress;
 
 class BookController extends Controller
 {
@@ -37,7 +36,7 @@ class BookController extends Controller
             });
         }
 
-        $books = $query->latest()->paginate(8)->withQueryString();
+        $books = $query->latest()->paginate(9)->withQueryString();
         $categories = Category::all();
                          
         return view('user.books.browse', compact('books', 'categories'));
@@ -54,49 +53,52 @@ class BookController extends Controller
 
     public function read(Book $book)
     {
-        $pdfPath = base_path('public/storage/' . $book->pdf_path);
-        $pdf = new Fpdi();
-        $pageCount = $pdf->setSourceFile($pdfPath);
-        
-        // Get or create reading progress
-        $progress = ReadingProgress::firstOrCreate(
-            [
-                'user_id' => auth()->id(),
-                'book_id' => $book->id
-            ],
-            [
-                'status' => 'reading',
-                'total_pages' => $pageCount,
-                'current_page' => 1,
-                'progress' => 0
-            ]
-        );
-        
-        $currentPage = max(1, $progress->current_page);
-        
-        return view('user.books.read', compact('book', 'currentPage', 'pageCount'));
+        // Increment the views count
+        $book->increment('views');
+        try {
+            $pdfPath = base_path('public/storage/' . $book->pdf_path);
+            $pdf = new Fpdi();
+            $pageCount = $pdf->setSourceFile($pdfPath);
+            
+            // Get or create reading progress
+            $progress = ReadingProgress::firstOrCreate(
+                [
+                    'user_id' => auth()->id(),
+                    'book_id' => $book->id
+                ],
+                [
+                    'status' => 'reading',
+                    'total_pages' => $pageCount,
+                    'current_page' => 1,
+                    'progress' => 0
+                ]
+            );
+            
+            $currentPage = max(1, $progress->current_page);
+            
+            return view('user.books.read', compact('book', 'currentPage', 'pageCount'));
+        } catch (\setasign\Fpdi\PdfParser\CrossReference\CrossReferenceException $e) {
+            return back()->with('error', 'This PDF uses a compression method not supported by our reader. Please contact support or try a different file.');
+        }
     }
 
     public function saveProgress(Request $request, Book $book)
     {
-        // $progress = ReadingProgress::where('user_id', auth()->id())
-        //     ->where('book_id', $book->id)
-        //     ->first();
-            
-        // if ($progress) {
-        //     $currentPage = $request->page;
-        //     $percentComplete = ($currentPage / $progress->total_pages) * 100;
-            
-        //     $progress->update([
-        //         'current_page' => $currentPage,
-        //         'progress' => $percentComplete,
-        //         'status' => $currentPage >= $progress->total_pages ? 'completed' : 'reading'
-        //     ]);
-        // }
-        
-        // return response()->json(['success' => true]);
+        $progress = ReadingProgress::where('user_id', auth()->id())
+            ->where('book_id', $book->id)
+            ->first();
 
-        dispatch(new SaveReadingProgress(auth()->id(), $book->id, $request->page));
+        if ($progress) {
+            $currentPage = $request->page;
+            $percentComplete = ($currentPage / $progress->total_pages) * 100;
+
+            $progress->update([
+                'current_page' => $currentPage,
+                'progress' => $percentComplete,
+                'status' => $currentPage >= $progress->total_pages ? 'completed' : 'reading'
+            ]);
+        }
+
         return response()->json(['success' => true]);
     }
 
@@ -122,5 +124,12 @@ class BookController extends Controller
     {
         $pdf = new Fpdi();
         return $pdf->setSourceFile($pdfPath);
+    }
+
+    public function bookmarks()
+    {
+        $user = auth()->user();
+        $bookmarks = $user->bookmarks()->with('book.author')->get();
+        return view('user.books.bookmarks', compact('bookmarks'));
     }
 }
