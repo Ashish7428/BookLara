@@ -37,7 +37,7 @@
                         <p class="card-text">{{ Str::limit($book->description, 100) }}</p>
                         
                         <div class="d-flex justify-content-between align-items-center">
-                            <span class="badge bg-{{ $book->status === 'approved' ? 'success' : ($book->status === 'rejected' ? 'danger' : 'warning') }}">
+                            <span class="badge bg-{{ $book->status === 'approved' ? 'success' : ($book->status === 'rejected' ? 'danger' : ($book->status === 'deleted' ? 'secondary' : 'warning')) }}">
                                 {{ ucfirst($book->status) }}
                             </span>
                             <small class="text-muted">{{ $book->publication_year }}</small>
@@ -55,6 +55,14 @@
                                     <i class="fas fa-trash-alt me-2"></i>Delete
                                 </button>
                             </form>
+                            @if($book->status === 'deleted' || $book->status === 'deleted_by_author')
+                            <form action="{{ route('author.books.restore', $book) }}" method="POST" class="flex-grow-1 m-0">
+                                @csrf
+                                <button type="submit" class="btn btn-outline-success w-100 d-flex align-items-center justify-content-center" onclick="return confirm('Restore this book?')">
+                                    <i class="fas fa-undo me-2"></i>Restore
+                                </button>
+                            </form>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -73,5 +81,3 @@
     </div>
 </div>
 @endsection
-
-{{-- Remove this entire section as it's causing the unwanted text --}}

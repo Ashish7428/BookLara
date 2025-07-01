@@ -61,6 +61,7 @@
             <hr>
             <div class="owl-carousel owl-theme" id="booksCarousel">
                 @forelse($myBooks as $book)
+                @if(optional($book->book)->status !== 'deleted')
                 <div class="item">
                     <div class="card h-100 border-0 shadow-sm book-card">
                         <img src="{{ asset($book->book->cover_image ?? 'images/default-book-cover.jpg') }}" 
@@ -94,6 +95,7 @@
                         </div>
                     </div>
                 </div>
+                @endif
                 @empty
                 <div class="item">
                     <div class="card border-0 shadow-sm">

@@ -27,8 +27,17 @@
                     <div class="row mb-3">
                         <div class="col-md-3 fw-bold">Status:</div>
                         <div class="col-md-9">
-                            <span class="badge bg-{{ $book->status === 'approved' ? 'success' : ($book->status === 'rejected' ? 'danger' : 'warning') }}">
-                                {{ ucfirst($book->status) }}
+                            <span class="badge 
+                                bg-{{
+                                    $book->status === 'approved' ? 'success' :
+                                    ($book->status === 'rejected' ? 'danger' :
+                                    ($book->status === 'deleted_by_author' ? 'secondary' : 'warning'))
+                                }}">
+                                @if($book->status === 'deleted_by_author')
+                                    Deleted by Author
+                                @else
+                                    {{ ucfirst($book->status) }}
+                                @endif
                             </span>
                         </div>
                     </div>

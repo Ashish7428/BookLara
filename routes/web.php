@@ -115,7 +115,7 @@ Route::middleware('auth:author')->group(function () {
     
     // Book routes with updated controller
      // Update this line
-    
+    Route::post('author/books/{book}/restore', [BookController::class, 'restore'])->name('author.books.restore');
     // In your routes
     Route::resource('author/books', BookController::class, ['as' => 'author']);
 });

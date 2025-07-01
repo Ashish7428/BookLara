@@ -204,17 +204,30 @@ class BookController extends Controller
             abort(403);
         }
 
-        if ($book->cover_image) {
-            Storage::disk('public')->delete($book->cover_image);
-        }
-        if ($book->pdf_path) {
-            Storage::disk('public')->delete($book->pdf_path);
-        }
-
-        $book->delete();
+        // Store previous status and mark as deleted_by_author
+        $book->previous_status = $book->status;
+        $book->status = 'deleted_by_author';
+        $book->save();
 
         return redirect()->route('author.books.index')
-            ->with('success', 'Book deleted successfully.');
+            ->with('success', 'Book marked as deleted.');
+    }
+
+    public function restore(Book $book)
+    {
+        if (auth('author')->id() !== $book->author_id) {
+            abort(403);
+        }
+        // Restore to approved if previously approved, else pending
+        if ($book->previous_status === 'approved') {
+            $book->status = 'approved';
+        } else {
+            $book->status = 'pending';
+        }
+        $book->previous_status = null;
+        $book->save();
+        return redirect()->route('author.books.index')
+            ->with('success', 'Book restored successfully.');
     }
 
     public function list()
@@ -223,7 +236,6 @@ class BookController extends Controller
                          ->where('status', 'approved')
                          ->latest()
                          ->paginate(12);
-                             
         return view('books.index', compact('books'));
     }
 
